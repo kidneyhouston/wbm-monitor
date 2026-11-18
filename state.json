@@ -13,7 +13,10 @@
   "seen": {
     "WBM Aktuelles": [],
     "WBM Pressemitteilungen": [],
-    "WBM Wohnungsangebote": [],
+    "WBM Wohnungsangebote": [
+      "194179419d374b60",
+      "c70b0d43ac256491"
+    ],
     "inberlinwohnen.de": []
   }
 }
