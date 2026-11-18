@@ -94,24 +94,31 @@ def notify(title, message, click=None, urgent=True, tag="house"):
     mail = os.environ.get("NOTIFY_EMAIL", "").strip()
     own_smtp = bool(os.environ.get("SMTP_HOST", "").strip())
     ok = False
+
     if not topic:
         print("WARNUNG: Secret NTFY_TOPIC ist leer oder nicht gesetzt")
-
-    if topic:
+    else:
         payload = {"topic": topic, "title": title, "message": message,
                    "priority": 5 if urgent else 3, "tags": [tag]}
         if click:
             payload["click"] = click
+        versuche = []
         if mail and not own_smtp:
-            payload["email"] = mail  # ntfy leitet zusätzlich per Mail weiter
-        try:
-            req = urllib.request.Request(
-                "https://ntfy.sh", data=json.dumps(payload).encode("utf-8"),
-                headers={"Content-Type": "application/json"}, method="POST")
-            urllib.request.urlopen(req, timeout=30).read()
-            ok = True
-        except Exception as e:  # noqa: BLE001
-            print(f"ntfy-Fehler: {e}")
+            versuche.append({**payload, "email": mail})  # ntfy leitet zusätzlich per Mail weiter
+        versuche.append(payload)  # Notlösung: nur Push, ohne Mail
+        for p in versuche:
+            try:
+                req = urllib.request.Request(
+                    "https://ntfy.sh", data=json.dumps(p).encode("utf-8"),
+                    headers={"Content-Type": "application/json"}, method="POST")
+                urllib.request.urlopen(req, timeout=30).read()
+                ok = True
+                break
+            except urllib.error.HTTPError as e:
+                antwort = e.read().decode("utf-8", "replace")[:300]
+                print(f"ntfy-Fehler: HTTP {e.code} - {antwort}")
+            except Exception as e:  # noqa: BLE001
+                print(f"ntfy-Fehler: {e}")
 
     if mail and own_smtp:
         try:
