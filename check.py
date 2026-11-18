@@ -24,24 +24,15 @@ from email.message import EmailMessage
 # ---------------------------------------------------------------- Einstellungen
 
 # Was gilt als Treffer? (Regulärer Ausdruck, Groß-/Kleinschreibung egal)
-KEYWORD = re.compile(r"Rathenower\s*(?:Stra(?:ß|ss)e|Str\.)", re.I)
+KEYWORD = re.compile(r"Rathenower|Moabit", re.I)
 
 # baseline=True : Beim ersten erfolgreichen Abruf werden bereits vorhandene Treffer
 #                 still gemerkt (z. B. alte Pressemitteilungen zum Richtfest).
 # baseline=False: Jeder Treffer löst sofort eine Benachrichtigung aus.
-# Gefilterte Liste "nur WBM" auf inberlinwohnen.de (der Parameter q ist ein verschlüsselter
-# Suchfilter, den die Seite selbst erzeugt hat; Seite 2 = "&page=2" dahinter).
-IBW_WBM = ("https://www.inberlinwohnen.de/wohnungsfinder?q="
-           "eyJpdiI6InFpNUVFN3BNUHU1eUNhRndxSXVrd0E9PSIsInZhbHVlIjoiTmFEV0tOQ3h2V2FSZ2htY0pTeitIMHlHNWFCamdvcGt3c2szMnlDaUNkU0RaQVdKSDJ6TkhZSlRmVVAvNDNJVmZBc0ZkeUltRFVsWnY0aHNwVGNnZFJjMTVnQVROMWxSQkRnMkpTTzlSSTFSZ3gzSTc1V0gzSlptWFJLUDROTmJKSUtFUlREMFlGMjNjRmR3R29GWHE3NmQrWmZmR3YxUE5hTkFzSGFOcjQrQW1jMEQrVG5VaThwYzEySWxueG9qMUdFVHdnRXZZYWVuUGRmazNwK3AxQlZsMFNKandvZENIbytScjBIT0x3Wjk3ajU3SVBucnptK3gzelpEWTR1Nnp6Rkx6ZS9nQ25QOTdObkhKMVVQVUhtejNDZS9QUmM1R3NGbjNXSitHTlE5a1Vsa0JMamp5OVp5c1QvM0hWUUZqTUdLazc1d2Y5TWkvN3FOR2hwZW96ekxObFR2MWViNUlNZ0txcnh5NC93dDJxVVF0TUZvVTNuSlpWMytPNlRsMjJzbkFzSE1DaEx6NVkzWFVaQTJNQT09IiwibWFjIjoiYTljYzkxMjBmYmUzODQ2MzAxYzdkZGRhYTkwMmM0NmZmMTIwMmI2YzFkZWUzNWM4YjUyM2RiOWVlNjYwYWM0ZSIsInRhZyI6IiJ9")
-
 SOURCES = [
     {"name": "WBM Wohnungsangebote",
      "url": "https://www.wbm.de/wohnungen-berlin/angebote/", "baseline": False},
-    {"name": "inberlinwohnen.de (nur WBM, Seite 1)",
-     "url": IBW_WBM, "baseline": False},
-    {"name": "inberlinwohnen.de (nur WBM, Seite 2)",
-     "url": IBW_WBM + "&page=2", "baseline": False},
-    {"name": "inberlinwohnen.de (alle Gesellschaften, Seite 1)",
+    {"name": "inberlinwohnen.de",
      "url": "https://www.inberlinwohnen.de/wohnungsfinder", "baseline": False},
     {"name": "WBM Pressemitteilungen",
      "url": "https://www.wbm.de/presse/pressemitteilung/", "baseline": True},
