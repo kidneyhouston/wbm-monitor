@@ -3,7 +3,10 @@
     "WBM Aktuelles": 0,
     "WBM Pressemitteilungen": 0,
     "WBM Wohnungsangebote": 0,
-    "inberlinwohnen.de": 0
+    "inberlinwohnen.de": 0,
+    "inberlinwohnen.de (alle Gesellschaften, Seite 1)": 0,
+    "inberlinwohnen.de (nur WBM, Seite 1)": 0,
+    "inberlinwohnen.de (nur WBM, Seite 2)": 0
   },
   "init": [
     "WBM Pressemitteilungen",
@@ -17,6 +20,9 @@
       "194179419d374b60",
       "c70b0d43ac256491"
     ],
-    "inberlinwohnen.de": []
+    "inberlinwohnen.de": [],
+    "inberlinwohnen.de (alle Gesellschaften, Seite 1)": [],
+    "inberlinwohnen.de (nur WBM, Seite 1)": [],
+    "inberlinwohnen.de (nur WBM, Seite 2)": []
   }
 }
