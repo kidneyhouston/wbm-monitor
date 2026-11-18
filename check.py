@@ -25,7 +25,7 @@ from email.message import EmailMessage
 # ---------------------------------------------------------------- Einstellungen
 
 # Was gilt als Treffer? (Regulärer Ausdruck, Groß-/Kleinschreibung egal)
-KEYWORD = re.compile(r"Rathenower|Eidechsenweg", re.I)
+KEYWORD = re.compile(r"Rathenower|Moabit", re.I)
 
 # baseline=True : Beim ersten erfolgreichen Abruf werden bereits vorhandene Treffer
 #                 still gemerkt (z. B. alte Pressemitteilungen zum Richtfest).
