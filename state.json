@@ -1,0 +1,19 @@
+{
+  "fails": {
+    "WBM Aktuelles": 0,
+    "WBM Pressemitteilungen": 0,
+    "WBM Wohnungsangebote": 0,
+    "inberlinwohnen.de": 0
+  },
+  "init": [
+    "WBM Pressemitteilungen",
+    "WBM Aktuelles"
+  ],
+  "last_run": "2026-11-18",
+  "seen": {
+    "WBM Aktuelles": [],
+    "WBM Pressemitteilungen": [],
+    "WBM Wohnungsangebote": [],
+    "inberlinwohnen.de": []
+  }
+}
