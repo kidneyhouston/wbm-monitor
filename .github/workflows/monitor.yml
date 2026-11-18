@@ -1,0 +1,39 @@
+name: WBM Monitor
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: wbm-monitor
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Seiten prüfen
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          NOTIFY_EMAIL: ${{ secrets.NOTIFY_EMAIL }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          SEND_TEST: ${{ github.event_name == 'workflow_dispatch' }}
+        run: python3 check.py
+
+      - name: Stand speichern
+        if: always()
+        run: |
+          git config user.name "wbm-monitor"
+          git config user.email "wbm-monitor@users.noreply.github.com"
+          git add state.json
+          git diff --staged --quiet || (git commit -m "Stand aktualisiert" && git push)
