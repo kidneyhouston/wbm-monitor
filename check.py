@@ -94,8 +94,7 @@ def notify(title, message, click=None, urgent=True, tag="house"):
     mail = os.environ.get("NOTIFY_EMAIL", "").strip()
     own_smtp = bool(os.environ.get("SMTP_HOST", "").strip())
     ok = False
-
-      if not topic:
+    if not topic:
         print("WARNUNG: Secret NTFY_TOPIC ist leer oder nicht gesetzt")
 
     if topic:
