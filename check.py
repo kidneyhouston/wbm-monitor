@@ -5,10 +5,9 @@ und benachrichtigt per Push (ntfy) und/oder E-Mail.
 Läuft ohne zusätzliche Pakete (nur Python-Standardbibliothek).
 Gesteuert über Umgebungsvariablen (in GitHub: "Secrets"):
   NTFY_TOPIC    (Pflicht)    geheimer Themenname für die Push-Nachrichten
-  NOTIFY_EMAIL  (optional)   E-Mail-Adresse für Benachrichtigungen
+  NOTIFY_EMAIL  (optional)   E-Mail-Adresse(n) für Benachrichtigungen, durch Komma getrennt
   SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS (optional)
-                             eigener Mailversand (z. B. Gmail mit App-Passwort).
-                             Ohne diese Angaben leitet ntfy die Nachricht per Mail weiter.
+                             eigener Mailversand (z. B. Gmail mit App-Passwort)
   SEND_TEST     "true" = Statusbericht senden (wird bei manuellem Start gesetzt)
 """
 import hashlib
@@ -25,20 +24,29 @@ from email.message import EmailMessage
 # ---------------------------------------------------------------- Einstellungen
 
 # Was gilt als Treffer? (Regulärer Ausdruck, Groß-/Kleinschreibung egal)
-KEYWORD = re.compile(r"Rathenower|Moabit", re.I)
+KEYWORD = re.compile(r"Rathenower\s*(?:Stra(?:ß|ss)e|Str\.)", re.I)
 
 # baseline=True : Beim ersten erfolgreichen Abruf werden bereits vorhandene Treffer
 #                 still gemerkt (z. B. alte Pressemitteilungen zum Richtfest).
 # baseline=False: Jeder Treffer löst sofort eine Benachrichtigung aus.
+# Gefilterte Liste "nur WBM" auf inberlinwohnen.de (der Parameter q ist ein verschlüsselter
+# Suchfilter, den die Seite selbst erzeugt hat; Seite 2 = "&page=2" dahinter).
+IBW_WBM = ("https://www.inberlinwohnen.de/wohnungsfinder?q="
+           "eyJpdiI6InFpNUVFN3BNUHU1eUNhRndxSXVrd0E9PSIsInZhbHVlIjoiTmFEV0tOQ3h2V2FSZ2htY0pTeitIMHlHNWFCamdvcGt3c2szMnlDaUNkU0RaQVdKSDJ6TkhZSlRmVVAvNDNJVmZBc0ZkeUltRFVsWnY0aHNwVGNnZFJjMTVnQVROMWxSQkRnMkpTTzlSSTFSZ3gzSTc1V0gzSlptWFJLUDROTmJKSUtFUlREMFlGMjNjRmR3R29GWHE3NmQrWmZmR3YxUE5hTkFzSGFOcjQrQW1jMEQrVG5VaThwYzEySWxueG9qMUdFVHdnRXZZYWVuUGRmazNwK3AxQlZsMFNKandvZENIbytScjBIT0x3Wjk3ajU3SVBucnptK3gzelpEWTR1Nnp6Rkx6ZS9nQ25QOTdObkhKMVVQVUhtejNDZS9QUmM1R3NGbjNXSitHTlE5a1Vsa0JMamp5OVp5c1QvM0hWUUZqTUdLazc1d2Y5TWkvN3FOR2hwZW96ekxObFR2MWViNUlNZ0txcnh5NC93dDJxVVF0TUZvVTNuSlpWMytPNlRsMjJzbkFzSE1DaEx6NVkzWFVaQTJNQT09IiwibWFjIjoiYTljYzkxMjBmYmUzODQ2MzAxYzdkZGRhYTkwMmM0NmZmMTIwMmI2YzFkZWUzNWM4YjUyM2RiOWVlNjYwYWM0ZSIsInRhZyI6IiJ9")
+
 SOURCES = [
     {"name": "WBM Wohnungsangebote",
      "url": "https://www.wbm.de/wohnungen-berlin/angebote/", "baseline": False},
+    {"name": "inberlinwohnen.de (nur WBM, Seite 1)",
+     "url": IBW_WBM, "baseline": False},
+    {"name": "inberlinwohnen.de (nur WBM, Seite 2)",
+     "url": IBW_WBM + "&page=2", "baseline": False},
+    {"name": "inberlinwohnen.de (alle Gesellschaften, Seite 1)",
+     "url": "https://www.inberlinwohnen.de/wohnungsfinder", "baseline": False},
     {"name": "WBM Pressemitteilungen",
      "url": "https://www.wbm.de/presse/pressemitteilung/", "baseline": True},
     {"name": "WBM Aktuelles",
      "url": "https://www.wbm.de/presse/aktuelles/", "baseline": True},
-    {"name": "inberlinwohnen.de",
-     "url": "https://www.inberlinwohnen.de/wohnungsfinder/", "baseline": False},
 ]
 
 # Nach so vielen Fehlversuchen in Folge (bei 10-Minuten-Takt ~ 1 Stunde) kommt eine Warnung.
@@ -69,11 +77,16 @@ def to_text(raw):
 
 
 def find_hits(text):
+    """Findet Treffer. Gleiche Adresse (Straße + Hausnummer) zählt nur einmal,
+    auch wenn sie mehrfach auf der Seite steht."""
     hits = {}
     for m in KEYWORD.finditer(text):
-        snippet = text[max(0, m.start() - 80): m.end() + 120].strip()
-        key = hashlib.sha1(snippet.encode("utf-8")).hexdigest()[:16]
-        hits[key] = snippet
+        name = re.sub(r"\s+", "", m.group(0).lower()).replace("ß", "ss").replace("str.", "strasse")
+        nr = re.match(r"\s*(\d+\s?[a-zA-Z]?)\b", text[m.end(): m.end() + 12])
+        adresse = name + (re.sub(r"\s+", "", nr.group(1)).lower() if nr else "")
+        key = hashlib.sha1(adresse.encode("utf-8")).hexdigest()[:16]
+        if key not in hits:
+            hits[key] = text[max(0, m.start() - 80): m.end() + 120].strip()
     return hits
 
 
@@ -192,10 +205,18 @@ def main():
             report.append(f"✓ {name}: erreichbar, {len(hits)} bestehende Treffer still gemerkt")
             continue
 
-        for key, snippet in new.items():
-            if notify(f"WBM: Neuer Treffer auf {name}", f"…{snippet}…", click=url):
-                seen.append(key)
-        report.append(f"✓ {name}: erreichbar ({len(text)} Zeichen), "
+        # Alle neuen Treffer einer Quelle werden in EINER Nachricht gemeldet
+        if new:
+            snippets = list(new.values())
+            body = "\n\n".join(f"…{s}…" for s in snippets[:5])
+            if len(snippets) > 5:
+                body += f"\n\n(+ {len(snippets) - 5} weitere)"
+            if notify(f"WBM-Monitor: {len(new)} neue(r) Treffer – {name}", body, click=url):
+                seen.extend(new.keys())
+
+        anzahl = re.search(r"Wir haben ([\d.]+) Wohnungen", text)
+        liste = f", Liste: {anzahl.group(1)} Wohnungen" if anzahl else ""
+        report.append(f"✓ {name}: erreichbar ({len(text)} Zeichen{liste}), "
                       f"{len(hits)} Treffer, davon {len(new)} neu")
 
     save_state(state)
